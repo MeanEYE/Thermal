@@ -1,5 +1,3 @@
-import random
-
 from ..thermal.base import Printer, Report
 from ..thermal.connections import BluetoothConnection
 from ..thermal.components import Text, Ruler, Border, MatrixCode
