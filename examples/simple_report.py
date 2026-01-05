@@ -1,6 +1,6 @@
-from ..thermal.base import Printer, Report
-from ..thermal.connections import BluetoothConnection
-from ..thermal.components import Text, Ruler, Border, MatrixCode
+from thermal.base import Printer, Report
+from thermal.connections import BluetoothConnection
+from thermal.components import Text, Ruler, Border, MatrixCode
 
 
 connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
