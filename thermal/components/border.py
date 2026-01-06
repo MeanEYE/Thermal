@@ -3,6 +3,23 @@ from ..base.component import Component
 
 class Border(Component):
 	"""Simple component that draws border around content."""
+	v_chars = (' ', '\xB3', '\xBA')
+	h_chars = (' ', '\xC4', '\xCD')
+
+	top_cell = (' ', '\xC2', '\xD1')
+	middle_cell = (' ', '\xC5', '\xD8')
+	bottom_cell = (' ', '\xC1', '\xCF')
+	footer_cell = {
+			'l': (' ', '\xC3', '\xCC'),
+			'r': (' ', '\xB4', '\xB9'),
+			}
+
+	corners = {
+		'tl': {'00': '\x00', '10': '\xDA', '11': '\xDA', '12': '\xD6', '21': '\xD5', '22': '\xC9'},
+		'tr': {'00': '\x00', '10': '\xBF', '11': '\xBF', '12': '\xB7', '21': '\xB8', '22': '\xBB'},
+		'bl': {'00': '\x00', '10': '\xC0', '11': '\xC0', '12': '\xD3', '21': '\xD4', '22': '\xC8'},
+		'br': {'00': '\x00', '10': '\xD9', '11': '\xD9', '12': '\xBD', '21': '\xBE', '22': '\xBC'},
+		}
 
 	def __init__(self, component, border=None):
 		self.component = component
@@ -19,27 +36,16 @@ class Border(Component):
 
 	def get_lines(self, width):
 		"""Return list of lines to be printed."""
-		v_chars = (' ', '\xB3', '\xBA')
-		h_chars = (' ', '\xC4', '\xCD')
-
-		corners = {
-			'tl': {'00': '\x00', '10': '\xDA', '11': '\xDA', '12': '\xD6', '21': '\xD5', '22': '\xC9'},
-			'tr': {'00': '\x00', '10': '\xBF', '11': '\xBF', '12': '\xB7', '21': '\xB8', '22': '\xBB'},
-			'bl': {'00': '\x00', '10': '\xC0', '11': '\xC0', '12': '\xD3', '21': '\xD4', '22': '\xC8'},
-			'br': {'00': '\x00', '10': '\xD9', '11': '\xD9', '12': '\xBD', '21': '\xBE', '22': '\xBC'},
-			}
-
-		# prepare characters
 		top_border, right_border, bottom_border, left_border = self.border
-		top = list(h_chars[self.border[0]] * width)
-		bottom = list(h_chars[self.border[2]] * width)
-		right = v_chars[self.border[1]]
-		left = v_chars[self.border[3]]
+		top = list(self.h_chars[top_border] * width)
+		bottom = list(self.h_chars[bottom_border] * width)
+		right = self.v_chars[right_border]
+		left = self.v_chars[left_border]
 
-		top[0] = corners['tl'][f'{top_border}{left_border}']
-		top[-1] = corners['tr'][f'{top_border}{right_border}']
-		bottom[0] = corners['bl'][f'{bottom_border}{left_border}']
-		bottom[-1] = corners['br'][f'{bottom_border}{right_border}']
+		top[0] = self.corners['tl'][f'{top_border}{left_border}']
+		top[-1] = self.corners['tr'][f'{top_border}{right_border}']
+		bottom[0] = self.corners['bl'][f'{bottom_border}{left_border}']
+		bottom[-1] = self.corners['br'][f'{bottom_border}{right_border}']
 
 		top = self.printer.set_line_spacing(0) + ''.join(top)
 		bottom = ''.join(bottom)
