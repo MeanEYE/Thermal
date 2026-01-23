@@ -24,7 +24,6 @@ class Report:
 
 	def print(self, cut_after=True):
 		"""Print packed components using configured connection and printer."""
-		self.printer.connect()
 		self.printer.reset()
 
 		# go through each component and get lines for printing
@@ -40,10 +39,9 @@ class Report:
 					buffer.append(line.encode('latin1'))
 
 		self.printer.print(b'\x0A'.join(buffer))
+		self.printer.line_feed()
 
 		# cut paper if requested
 		if cut_after and self.printer.supports_cutting:
-			self.printer.cut_paper()
-
-		self.printer.line_feed(2)
-		self.printer.disconnect()
+			self.printer.line_feed_in_units(self.printer.offset_units)
+			self.printer.cut_paper(False)
