@@ -15,6 +15,8 @@ class Printer:
 	paper_width = 58
 	supports_cutting = False
 	default_code_page = 0
+	offset_lines = 3  # number of lines to feed before print is fully visible
+	offset_units = 350
 
 	# width of text in dots
 	font_normal = 12
@@ -37,6 +39,13 @@ class Printer:
 		height = values['height'] or 1
 		value = chr(16 * int(width) + int(height))
 		return f'{self.GS}!{value}'
+
+	@classmethod
+	def __parse_image(self, match, string):
+		"""Return string for including image type."""
+		values = match.groupdict()
+		image_id = values['id']
+		return f'{self.GS}(L\x06\x000E{image_id}\x01\x01'
 
 	@classmethod
 	def parse(cls, string):
@@ -63,7 +72,8 @@ class Printer:
 				}
 		parsers = (
 			 (r'\[font (?P<number>\d{1})\]', cls.__parse_font),
-			 (r'\[size (?P<width>\d{1,2})(?:,(?P<height>\d{1,2}))?\]', cls.__parse_size)
+			 (r'\[size (?P<width>\d{1,2})(?:,(?P<height>\d{1,2}))?\]', cls.__parse_size),
+			 (r'\[img (?P<id>[a-zA-z0-9]+)?\]', cls.__parse_image)
 			 )
 
 		# replace instances
@@ -110,10 +120,27 @@ class Printer:
 	def line_feed(self, count=1):
 		"""Print and feed number of lines."""
 		self.connection.write(f'{self.ESC}d' + chr(count))
+		self.connection.write(self.LF)
+
+	def line_feed_in_units(self, count=1):
+		"""Print and feed number of motion units."""
+		times = [255,] * (count // 255)
+		times.append(count % 255)
+
+		buffer = ''.join([f'{self.ESC}J' + chr(c) for c in times])
+		self.connection.write(buffer.encode('latin1'))
 
 	def reverse_line_feed(self, count=1):
 		"""Print and reverse feed number of lines."""
 		self.connection.write(f'{self.ESC}e' + chr(count))
+
+	def reverse_line_feed_in_units(self, count=1):
+		"""Print and feed number of motion units."""
+		times = [255,] * (count // 255)
+		times.append(count % 255)
+
+		buffer = ''.join([f'{self.ESC}K' + chr(c) for c in times])
+		self.connection.write(buffer.encode('latin1'))
 
 	def get_width(self):
 		"""Get maximum number of characters we can fit horizontally."""
@@ -133,4 +160,5 @@ class Printer:
 
 	def cut_paper(self, partial=True):
 		"""If supported paper will be cut partially or in entirety."""
-		self.connection.write(f'{self.GS}V{partial}')
+		option = '1' if partial else '0'
+		self.connection.write(f'{self.GS}V{option}')
