@@ -1,13 +1,16 @@
 import random
 
+from thermal.printers import EpsonPrinter
 from thermal.base import Printer, Report
-from thermal.connections import BluetoothConnection
+from thermal.connections import BluetoothConnection, UsbConnection, DebugConnection
 from thermal.components import Text, Ruler, Border, MatrixCode, Table, Column
 
 
-connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
-printer = Printer(connection)
+# connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
+connection = UsbConnection(0x04b8, 0x0202)
+# connection = DebugConnection()
 
+printer = EpsonPrinter(connection)
 report = Report(printer)
 
 # create header
@@ -43,4 +46,6 @@ for index in range(5):
 footer.set_text('Total: {}'.format(total))
 
 # print report and if supported cut page
-report.print(cut_after=True)
+printer.connect()
+report.print()
+printer.disconnect()

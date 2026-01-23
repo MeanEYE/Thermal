@@ -1,17 +1,20 @@
+from thermal.printers import EpsonPrinter
 from thermal.base import Printer, Report
-from thermal.connections import BluetoothConnection
+from thermal.connections import BluetoothConnection, UsbConnection, DebugConnection
 from thermal.components import Text, Ruler, Border, MatrixCode
 
 
-connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
-printer = Printer(connection)
+# connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
+# connection = DebugConnection()
 
+connection = UsbConnection(0x04b8, 0x0202)
+printer = EpsonPrinter(connection)
 report = Report(printer)
 
 # create header
 report.add(Text('[size 1,1][align c][inv]Printer Test[/inv][/size]'))
 report.add(Text(
-	'[align l]This is a [u]complete[/u] long text test on a small '
+	'[align l]This is a [u]complete[/u] long text on a small '
 	'printer which should wrap [em]around[/em]!'
 	))
 
@@ -21,4 +24,6 @@ report.add(Ruler(double=False))
 report.add(MatrixCode('https://gitlab.com/MeanEYE/Thermal'))
 
 # print report and if supported cut page
-report.print(cut_after=True)
+printer.connect()
+report.print(True)
+printer.disconnect()
