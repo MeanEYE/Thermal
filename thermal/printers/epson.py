@@ -17,14 +17,21 @@ class EpsonPrinter(Printer):
 		Printer.__init__(self, connection)
 		self.narrow = False
 
-	def connect(self):
-		"""Connect printer."""
-		Printer.connect(self)
-
-		# configure print area
+	def __apply_print_area(self):
+		"""docstring for __set_print_area"""
 		self.print_area = 360 if self.narrow else 512
 		low, high = chr(self.print_area % 256), chr(self.print_area // 256)
 		self.connection.write(f'{self.GS}W{low}{high}')
+
+	def connect(self):
+		"""Connect printer."""
+		Printer.connect(self)
+		self.__apply_print_area()
+
+	def reset(self):
+		"""Reset printer to default configuration."""
+		Printer.reset(self)
+		self.__apply_print_area()
 
 	def set_narrow(self, narrow=True):
 		"""Epson printers have adapters to use 58mm as well as 80mm. This
