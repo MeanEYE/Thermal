@@ -16,6 +16,10 @@ report = Report(printer)
 # 8 pixels within a single byte. This is only when printing in
 # monochrome mode which is the most widely accepted format.
 
+# By far the simplest way of making images is to use any known
+# image editing program like Gimp, make monochrome image and save
+# as binary PBM image. See example: image.input.pbm
+
 image_data = bytes(''.join([
   '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF',
   '\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01',
