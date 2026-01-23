@@ -10,7 +10,6 @@ class Report:
 	Params:
 		connection - Any sort of serial connection, be it bluetooth, serial, network, file;
 		dots_per_line - From printer's specification, number of dots per each line;
-		paper_width - 58, 80, etc. (in milimeters)
 	"""
 
 	def __init__(self, printer):
@@ -22,7 +21,7 @@ class Report:
 		self.components.append(component)
 		component.set_printer(self.printer)
 
-	def print(self, cut_after=True):
+	def print(self, cut_after=False, cut_partial=True):
 		"""Print packed components using configured connection and printer."""
 		self.printer.reset()
 
@@ -44,4 +43,4 @@ class Report:
 		# cut paper if requested
 		if cut_after and self.printer.supports_cutting:
 			self.printer.line_feed_in_units(self.printer.offset_units)
-			self.printer.cut_paper(False)
+			self.printer.cut_paper(cut_partial)

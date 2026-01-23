@@ -11,12 +11,12 @@ class Printer:
 	TAB = '\x09'
 
 	# printer specification
-	dots_per_line = 384
-	paper_width = 58
+	print_area = 384
 	supports_cutting = False
 	default_code_page = 0
 	offset_lines = 3  # number of lines to feed before print is fully visible
 	offset_units = 350
+	legacy_graphics = True
 
 	# width of text in dots
 	font_normal = 12
@@ -144,7 +144,7 @@ class Printer:
 
 	def get_width(self):
 		"""Get maximum number of characters we can fit horizontally."""
-		return int(self.dots_per_line / self.font_normal)
+		return int(self.print_area / self.font_normal)
 
 	def connect(self):
 		"""Connect printer."""
