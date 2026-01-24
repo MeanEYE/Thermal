@@ -1,3 +1,4 @@
+import os
 
 from ..base.component import Component
 
@@ -51,13 +52,59 @@ class Image(Component):
 		assert 0 <= align <= 2
 		self.alignment = align
 
-	def get_width_bytes(self):
-		"""Return image width in two (low, high) bytes."""
-		assert self.width > 0
-		return self.__get_int_in_bytes(self.width)
+	def load_from_pbm(self, path):
+		"""Load image data from PBM format."""
+		assert os.path.exists(path)
+		result = False
 
-	def get_lines(self, width):
-		"""Prepare lines from binary data and return them for printing."""
+		with open(path, 'rb') as raw_file:
+			magic = raw_file.readline().strip()
+			dimensions = raw_file.readline().strip().split(b' ')
+			image_width, image_height = int(dimensions[0]), int(dimensions[1])
+			data = raw_file.read()
+
+		if magic == b'P4':
+			# no conversion needed
+			self.width = image_width
+			self.height = image_height
+			self.data = data
+			result = True
+
+		elif magic == b'P1':
+			# needs packing
+			self.width = image_width
+			self.height = image_height
+
+			# prepare for bit packing
+			output = bytearray()
+			output_bits = 0
+			character = 0
+
+			# walk through file ignoring anything other than 0 and 1 and
+			# shifting current bit setting marker. If width is not divisible
+			# by eight, remaining bits are ignored and treated as 0.
+			for digit in data:
+				if digit not in (48, 49): continue
+
+				position = 7 - (output_bits % 8)
+				character |= (digit - 48) << position
+				output_bits += 1
+
+				if output_bits == image_width:
+					output.append(character)
+					output_bits = 0
+					character = 0
+
+				if position == 0:
+					output.append(character)
+					character = 0
+
+			self.data = output
+
+		return result
+
+	def __print_modern(self, width):
+		"""Print using modern command."""
 		result = []
 		printer = self.printer
 
@@ -90,3 +137,25 @@ class Image(Component):
 		result.append(f'{printer.GS}(L\x06\x000E{self.image_id}{x_scale}{y_scale}')
 
 		return result
+
+	def __print_legacy(self, width):
+		"""Print using legacy method."""
+		result = []
+		printer = self.printer
+
+		truth_table = { (1, 1): '0', (2, 1): '1', (1, 2): '2', (2, 2): '3' }
+		scale = truth_table[(self.scale_x, self.scale_y)]
+
+		# prepare image size
+		width = self.__get_int_in_bytes(self.width)
+		height = self.__get_int_in_bytes(self.height)
+		image_size = chr(width[0]) + chr(width[1]) + chr(height[0]) + chr(height[1])
+
+		# print data
+		result.append(f'{printer.GS}v0{image_size}' + self.data.decode('latin1'))
+
+		return result
+
+	def get_lines(self, width):
+		"""Prepare lines from binary data and return them for printing."""
+		return self.__print_legacy(width) if self.printer.legacy_graphics else self.__print_modern(width)
