@@ -13,8 +13,8 @@ report = Report(printer)
 
 # Image data is defined in bits, but packed and sent in bytes.
 # When importing image from a known format make sure you place
-# 8 pixels within a single byte. This is only when printing in
-# monochrome mode which is the most widely accepted format.
+# 8 pixels within a single byte. If width is not divisible by 8
+# remaining missing bits are ignored and treated as 0.
 
 # By far the simplest way of making images is to use any known
 # image editing program like Gimp, make monochrome image and save
