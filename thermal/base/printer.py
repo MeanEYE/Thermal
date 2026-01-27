@@ -79,7 +79,11 @@ class Printer:
 		# replace instances
 		result = string
 		for tag, value in replacements.items():
-			result = result.replace('[' + tag + ']', value)
+			try:
+				result = result.replace('[' + tag + ']', value)
+			except Exception as error:
+				print(f'Error parsing {tag}, with value {value}: '+repr(error))
+				break
 
 		# replace instances with parsers
 		for expression, callback in parsers:
