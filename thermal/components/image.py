@@ -147,12 +147,12 @@ class Image(Component):
 		scale = truth_table[(self.scale_x, self.scale_y)]
 
 		# prepare image size
-		width = self.__get_int_in_bytes(self.width)
+		width = self.__get_int_in_bytes((self.width + 7) // 8)
 		height = self.__get_int_in_bytes(self.height)
 		image_size = chr(width[0]) + chr(width[1]) + chr(height[0]) + chr(height[1])
 
 		# print data
-		result.append(f'{printer.GS}v0{image_size}' + self.data.decode('latin1'))
+		result.append(f'{printer.GS}v0{scale}{image_size}' + self.data.decode('latin1'))
 
 		return result
 
