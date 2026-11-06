@@ -109,7 +109,7 @@ class Image(Component):
 
 	def __print_modern(self, width):
 		"""Print using modern command."""
-		result = []
+		result = ''
 		printer = self.printer
 
 		tone = '0'
@@ -131,21 +131,21 @@ class Image(Component):
 		# upload image to printer RAM (download graphics, fn 83) and
 		# cache it using unique id; NV graphics (fn 67) would wear flash
 		if not self.image_cached:
-			result.append(f'{printer.GS}(L{data_size}0S{header}' + self.data.decode('latin1'))
+			result += f'{printer.GS}(L{data_size}0S{header}' + self.data.decode('latin1')
 			self.image_cached = True
 
-		# align image if requested
+		# align image if requested, report resets alignment after component
 		if self.alignment is not None:
-			result.append(f'{printer.ESC}a' + chr(self.alignment) + printer.LF)
+			result += printer.set_alignment(self.alignment)
 
 		# tell printer to print download graphics with specified id (fn 85)
-		result.append(f'{printer.GS}(L\x06\x000U{self.image_id}{x_scale}{y_scale}')
+		result += f'{printer.GS}(L\x06\x000U{self.image_id}{x_scale}{y_scale}'
 
-		return result
+		return [result,]
 
 	def __print_legacy(self, width):
 		"""Print using legacy method."""
-		result = []
+		result = ''
 		printer = self.printer
 
 		truth_table = { (1, 1): '0', (2, 1): '1', (1, 2): '2', (2, 2): '3' }
@@ -156,10 +156,14 @@ class Image(Component):
 		height = self.__get_int_in_bytes(self.height)
 		image_size = chr(width[0]) + chr(width[1]) + chr(height[0]) + chr(height[1])
 
-		# print data
-		result.append(f'{printer.GS}v0{scale}{image_size}' + self.data.decode('latin1'))
+		# align image if requested, report resets alignment after component
+		if self.alignment is not None:
+			result += printer.set_alignment(self.alignment)
 
-		return result
+		# print data
+		result += f'{printer.GS}v0{scale}{image_size}' + self.data.decode('latin1')
+
+		return [result,]
 
 	def get_lines(self, width):
 		"""Prepare lines from binary data and return them for printing."""

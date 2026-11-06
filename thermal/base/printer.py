@@ -117,6 +117,11 @@ class Printer:
 			positions += chr(position)
 		return f'{self.ESC}D{positions}\x00'
 
+	def set_alignment(self, alignment=0):
+		"""Return string for setting alignment, 0 - left, 1 - center, 2 - right.
+		Printer only honours this at the beginning of a line."""
+		return f'{self.ESC}a' + chr(alignment)
+
 	def set_code_page(self, code_page):
 		"""Return string for setting code page."""
 		return f'{self.ESC}t' + chr(code_page)

@@ -27,17 +27,23 @@ class Report:
 		for component in self.components:
 			component.on_printer_reset()
 
+		# alignment and line spacing are printer modes which would otherwise
+		# leak from one component into the next, so each component starts
+		# from defaults; this must be at the beginning of a line to take effect
+		reset_modes = self.printer.set_alignment(0) + self.printer.set_default_line_spacing()
+		reset_modes = reset_modes.encode('latin1')
+
 		# go through each component and get lines for printing
 		buffer = []
 		width = self.printer.get_width()
 		for component in self.components:
 			lines = component.get_lines(width)
+			if not lines:
+				continue
 
-			for line in lines:
-				if isinstance(line, bytes):
-					buffer.append(line)
-				else:
-					buffer.append(line.encode('latin1'))
+			lines = [line if isinstance(line, bytes) else line.encode('latin1') for line in lines]
+			lines[0] = reset_modes + lines[0]
+			buffer.extend(lines)
 
 		self.printer.print(b'\x0A'.join(buffer))
 		self.printer.line_feed()
