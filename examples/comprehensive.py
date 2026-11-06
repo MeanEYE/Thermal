@@ -104,19 +104,25 @@ report.add(plain_table)
 
 # --- codes --------------------------------------------------------------
 
-# CODE39 through function B (type 69), HRI text printed below in font B
-barcode = BarCode('THERMAL', chr(69))
+# CODE39 bar code with human readable text printed below in font B
+barcode = BarCode('THERMAL', BarCode.CODE39)
 barcode.set_height(60)
 barcode.set_width(2)
-barcode.set_text_position(2)
-barcode.set_text_font(1)
+barcode.set_text_position(BarCode.TEXT_BELOW)
+barcode.set_text_font(BarCode.FONT_B)
 report.add(barcode)
 
-# QR code, error correction 1 (L) to 4 (H), module size in dots
-qr = MatrixCode('https://gitlab.com/MeanEYE/Thermal')
-qr.set_error_correction(2)
+# QR code with error correction level and module size in dots
+qr = MatrixCode('https://gitlab.com/MeanEYE/Thermal', MatrixCode.QR_CODE)
+qr.set_error_correction(MatrixCode.ERROR_M)
 qr.set_module_size(5)
 report.add(qr)
+
+# Data Matrix, size is picked by the printer unless set
+matrix = MatrixCode('Thermal', MatrixCode.DATA_MATRIX)
+matrix.set_module_size(4)
+matrix.set_align(MatrixCode.ALIGN_RIGHT)
+report.add(matrix)
 
 
 # --- inline image and footer --------------------------------------------
