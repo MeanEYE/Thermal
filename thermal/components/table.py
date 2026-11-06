@@ -4,6 +4,7 @@ import textwrap
 from functools import reduce
 
 from ..base.component import Component
+from ..base.printer import visible_length
 from ..components import Border
 
 
@@ -19,7 +20,6 @@ class Table(Component):
 		self.data = []
 		self.footer = None
 		self.border = (2, 2, 2, 2)
-		self.code_page = None
 
 		# table options
 		self.print_titles = True
@@ -38,13 +38,18 @@ class Table(Component):
 			column.title.set_printer(printer)
 
 	def on_printer_reset(self):
-		"""Forward printer reset to footer and component titles."""
+		"""Forward printer reset to footer, component titles and cells."""
 		if self.footer:
 			self.footer.on_printer_reset()
 
 		for column in self.columns:
 			if isinstance(column.title, Component):
 				column.title.on_printer_reset()
+
+		for row in self.data:
+			for value in row:
+				if isinstance(value, Component):
+					value.on_printer_reset()
 
 	def set_print_titles(self, print_titles=True):
 		"""Configure printing column titles."""
@@ -57,12 +62,6 @@ class Table(Component):
 	def set_print_cell_lines(self, print_cell_lines):
 		"""Configure printing cell lines."""
 		self.print_cell_lines = print_cell_lines
-
-	def set_code_page(self, code_page):
-		"""Set code page for cell values and column titles. Borders and
-		cell lines stay in printer's default page so box characters
-		print correctly with any page."""
-		self.code_page = code_page
 
 	def set_footer(self, footer):
 		"""Sets footer component which can be used to print summaries
@@ -77,7 +76,9 @@ class Table(Component):
 			self.columns.append(column)
 
 	def add_row(self, row):
-		"""Add tuple of values. Number of values must be the same as number of columns."""
+		"""Add tuple of values, number of values must be the same as number
+		of columns. Values are strings or components, a `Text` with its own
+		code page for example."""
 		if len(row) != len(self.columns):
 			raise TableError('Number of data points differs from number of columns in the table.')
 
@@ -99,22 +100,20 @@ class Table(Component):
 			if y is None: return x
 			return x - y
 
-		# code page switches around cell content, empty if not requested
-		if self.code_page is not None:
-			page_on = self.printer.set_code_page(self.code_page)
-			page_off = self.printer.set_code_page(self.printer.default_code_page)
-		else:
-			page_on = page_off = ''
-
 		def prepare_cell(width, value, border):
-			value = textwrap.wrap(
-					str(value), width=width, expand_tabs=True, replace_whitespace=True,
-					fix_sentence_endings=False, break_long_words=True, drop_whitespace=True,
-					break_on_hyphens=True, tabsize=0, max_lines=None, placeholder='…'
-					)
+			"""Wrap value to width and pad each line by its visible length,
+			components render themselves and may carry markup or code page."""
+			if isinstance(value, Component):
+				value.set_printer(self.printer)
+				lines = value.get_lines(width) or ['']
+			else:
+				lines = textwrap.wrap(
+						str(value), width=width, expand_tabs=True, replace_whitespace=True,
+						fix_sentence_endings=False, break_long_words=True, drop_whitespace=True,
+						break_on_hyphens=True, tabsize=0, max_lines=None, placeholder='…'
+						) or ['']
 
-			output = '{:<' + str(width) + '}'
-			return tuple(page_on + output.format(v) + page_off + border for v in value)
+			return tuple(line + ' ' * (width - visible_length(line)) + border for line in lines)
 
 		# prepare column widths
 		initial_width = width - (len(self.columns) - 1)
@@ -163,7 +162,7 @@ class Table(Component):
 			pos += cw
 
 			# update columns row
-			columns += f'{self.printer.ESC}E1' + page_on + column.get_title(cw) + page_off + f'{self.printer.ESC}E0'
+			columns += f'{self.printer.ESC}E1' + column.get_title(cw) + f'{self.printer.ESC}E0'
 
 			# update characters
 			if index == len(widths) - 1:
@@ -229,9 +228,9 @@ class Table(Component):
 			result.append(''.join(footer))
 			lines = self.footer.get_lines(width - 2)
 			if self.print_border:
-				lines = [left + line.ljust(width - 2) + right for line in lines]
+				lines = [left + line + ' ' * (width - 2 - visible_length(line)) + right for line in lines]
 			else:
-				lines = [line.ljust(width) for line in lines]
+				lines = [line + ' ' * (width - visible_length(line)) for line in lines]
 			result.extend(lines)
 
 		if self.print_border:
@@ -262,8 +261,7 @@ class Column:
 		else:
 			title = self.title
 
-		output = '{:<' + str(width) + '}'
-		return output.format(title)
+		return title + ' ' * max(0, width - visible_length(title))
 
 	def set_width(self, width):
 		"""Set width in characters or reset it with `None`."""

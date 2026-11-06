@@ -1,4 +1,5 @@
 from ..base.component import Component
+from ..base.printer import visible_length
 
 
 class Border(Component):
@@ -24,12 +25,6 @@ class Border(Component):
 	def __init__(self, component, border=None):
 		self.component = component
 		self.border = border or (1, 1, 1, 1)
-		self.code_page = None
-
-	def set_code_page(self, code_page):
-		"""Set code page for content inside the border. Box characters
-		stay in printer's default page."""
-		self.code_page = code_page
 
 	def set_printer(self, printer):
 		"""Set printer to be used for various calculations."""
@@ -60,15 +55,10 @@ class Border(Component):
 		top = self.printer.set_line_spacing(0) + ''.join(top)
 		bottom = ''.join(bottom)
 
-		# apply them to content, switching code page around it if requested
-		if self.code_page is not None:
-			page_on = self.printer.set_code_page(self.code_page)
-			page_off = self.printer.set_code_page(self.printer.default_code_page)
-		else:
-			page_on = page_off = ''
-
+		# apply them to content, padding by visible width so markup and
+		# code page switches inside the content don't shift the edge
 		lines = self.component.get_lines(width - 2)
-		lines = [left + page_on + line.ljust(width - 2) + page_off + right for line in lines]
+		lines = [left + line + ' ' * (width - 2 - visible_length(line)) + right for line in lines]
 		lines.insert(0, top)
 		lines.append(bottom)
 

@@ -1,6 +1,7 @@
 import re
 
 from ..base.component import Component
+from ..base.printer import iter_atoms, visible_length
 
 
 class Text(Component):
@@ -45,14 +46,20 @@ class Text(Component):
 	def __wrap(self, text, width, tab_stops):
 		"""Wrap text to width honouring tab stops. Runs of spaces are kept
 		mid-line and dropped at line boundaries, words longer than width
-		are broken, tab with no stop left on the line breaks the line."""
+		are broken, tab with no stop left on the line breaks the line.
+		Command sequences from markup have no width and are never split."""
 		lines = []
 		line = ''
 		column = 0
 
 		def flush():
 			nonlocal line, column
-			lines.append(line.rstrip(' '))
+			if line and lines and visible_length(line) == 0:
+				# only commands, a closing tag after a wrap for example,
+				# belong to the previous line rather than a blank one
+				lines[-1] += line
+			else:
+				lines.append(line.rstrip(' '))
 			line, column = '', 0
 
 		# other whitespace is treated as plain space, tabs are kept
@@ -81,17 +88,27 @@ class Text(Component):
 						column += len(token)
 					continue
 
-				while token:
+				atoms = list(iter_atoms(token))
+				while atoms:
+					length = sum(atom_width for _, atom_width in atoms)
 					room = width - column
-					if len(token) <= room:
-						line += token
-						column += len(token)
+					if length <= room:
+						line += ''.join(chunk for chunk, _ in atoms)
+						column += length
 						break
 
-					if column == 0:
-						# word longer than width, break it
-						line += token[:room]
-						token = token[room:]
+					if column > 0:
+						flush()
+						continue
+
+					# word longer than width, break it between visible
+					# characters taking zero width commands along
+					taken = 0
+					while atoms and (taken + atoms[0][1] <= room or taken == 0):
+						chunk, atom_width = atoms.pop(0)
+						line += chunk
+						taken += atom_width
+					column += taken
 					flush()
 
 		if line:
@@ -129,9 +146,11 @@ class Text(Component):
 		if self.tab_stops is not None:
 			text[0] = printer.set_tab_stops(self.tab_stops) + text[0]
 
-		# apply code pages if needed
+		# apply code page to every line separately so lines stay correct
+		# when interleaved with other content, inside tables for example
 		if self.code_page is not None:
-			text[0] = printer.set_code_page(self.code_page) + text[0]
-			text[-1] = text[-1] + printer.set_code_page(printer.default_code_page)
+			page_on = printer.set_code_page(self.code_page)
+			page_off = printer.set_code_page(printer.default_code_page)
+			text = [page_on + line + page_off for line in text]
 
 		return text

@@ -1,6 +1,65 @@
 import re
 
 
+def iter_atoms(text):
+	"""Split a line into atoms, yielding `(chunk, width)` pairs. Command
+	sequences produced by components and markup, and control characters,
+	have zero width; printable characters have width one. Lets wrapping
+	and padding ignore commands and never break inside of them."""
+	index = 0
+	end = len(text)
+
+	while index < end:
+		start = index
+		char = text[index]
+		following = text[index + 1] if index + 1 < end else ''
+
+		if char == '\x1b':
+			if following == 'D':
+				terminator = text.find('\x00', index)
+				index = end if terminator < 0 else terminator + 1
+			elif following in '2@':
+				index += 2
+			elif following == '(' and index + 4 < end:
+				index += 5 + ord(text[index + 3]) + ord(text[index + 4]) * 256
+			else:
+				index += 3
+			yield text[start:index], 0
+
+		elif char == '\x1d':
+			if following == '(' and index + 4 < end:
+				index += 5 + ord(text[index + 3]) + ord(text[index + 4]) * 256
+			elif following == 'W':
+				index += 4
+			elif following == 'v' and index + 7 < end:
+				columns = ord(text[index + 4]) + ord(text[index + 5]) * 256
+				rows = ord(text[index + 6]) + ord(text[index + 7]) * 256
+				index += 8 + columns * rows
+			elif following == 'k' and index + 2 < end:
+				if ord(text[index + 2]) <= 6:
+					terminator = text.find('\x00', index + 3)
+					index = end if terminator < 0 else terminator + 1
+				else:
+					index += 4 + (ord(text[index + 3]) if index + 3 < end else 0)
+			else:
+				index += 3
+			yield text[start:index], 0
+
+		elif char < ' ':
+			index += 1
+			yield char, 0
+
+		else:
+			index += 1
+			yield char, 1
+
+
+def visible_length(text):
+	"""Number of printable characters in a line, ignoring command
+	sequences. Tabs count as zero width."""
+	return sum(width for _, width in iter_atoms(text))
+
+
 class Printer:
 	"""Base printer class which can be inherited or used as is."""
 	CR = '\x0D'
