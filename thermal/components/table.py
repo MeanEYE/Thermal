@@ -36,6 +36,15 @@ class Table(Component):
 				continue
 			column.title.set_printer(printer)
 
+	def on_printer_reset(self):
+		"""Forward printer reset to footer and component titles."""
+		if self.footer:
+			self.footer.on_printer_reset()
+
+		for column in self.columns:
+			if isinstance(column.title, Component):
+				column.title.on_printer_reset()
+
 	def set_print_titles(self, print_titles=True):
 		"""Configure printing column titles."""
 		self.print_titles = print_titles

@@ -11,6 +11,11 @@ class Component:
 		"""Set printer to be used for various calculations."""
 		self.printer = printer
 
+	def on_printer_reset(self):
+		"""Called after printer is initialized and before printing. Components
+		keeping state on the printer side (uploaded images) must drop it here."""
+		pass
+
 	def get_lines(self, width):
 		"""Return list of lines to be printed."""
 		raise NotImplemented()

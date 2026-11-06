@@ -24,6 +24,8 @@ class Report:
 	def print(self, cut_after=False, cut_partial=True):
 		"""Print packed components using configured connection and printer."""
 		self.printer.reset()
+		for component in self.components:
+			component.on_printer_reset()
 
 		# go through each component and get lines for printing
 		buffer = []

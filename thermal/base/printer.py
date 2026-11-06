@@ -45,7 +45,7 @@ class Printer:
 		"""Return string for including image type."""
 		values = match.groupdict()
 		image_id = values['id']
-		return f'{self.GS}(L\x06\x000E{image_id}\x01\x01'
+		return f'{self.GS}(L\x06\x000U{image_id}\x01\x01'
 
 	@classmethod
 	def parse(cls, string):

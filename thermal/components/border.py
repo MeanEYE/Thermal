@@ -30,6 +30,10 @@ class Border(Component):
 		Component.set_printer(self, printer)
 		self.component.set_printer(printer)
 
+	def on_printer_reset(self):
+		"""Forward printer reset to contained component."""
+		self.component.on_printer_reset()
+
 	def set_component(self, component):
 		"""Set component for rendering."""
 		self.component = component

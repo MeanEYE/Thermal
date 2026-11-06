@@ -22,6 +22,10 @@ class Image(Component):
 			self.image_id = f'{Image.image_counter % 256:02x}'
 			Image.image_counter += 1
 
+	def on_printer_reset(self):
+		"""Printer reset discards download graphics on some models, upload again."""
+		self.image_cached = False
+
 	def __get_int_in_bytes(self, value):
 		"""Return low and high bytes for single integer."""
 		return value % 256, value // 256
@@ -124,17 +128,18 @@ class Image(Component):
 		total_size = self.__get_int_in_bytes(len(header) + len(self.data)+ 2)
 		data_size = chr(total_size[0]) + chr(total_size[1])
 
-		# upload image to printer and cache it using unique id
+		# upload image to printer RAM (download graphics, fn 83) and
+		# cache it using unique id; NV graphics (fn 67) would wear flash
 		if not self.image_cached:
-			result.append(f'{printer.GS}(L{data_size}0C{header}' + self.data.decode('latin1'))
+			result.append(f'{printer.GS}(L{data_size}0S{header}' + self.data.decode('latin1'))
 			self.image_cached = True
 
 		# align image if requested
 		if self.alignment is not None:
 			result.append(f'{printer.ESC}a' + chr(self.alignment) + printer.LF)
 
-		# tell printer to print image with specified id
-		result.append(f'{printer.GS}(L\x06\x000E{self.image_id}{x_scale}{y_scale}')
+		# tell printer to print download graphics with specified id (fn 85)
+		result.append(f'{printer.GS}(L\x06\x000U{self.image_id}{x_scale}{y_scale}')
 
 		return result
 
