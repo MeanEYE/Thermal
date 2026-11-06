@@ -19,6 +19,7 @@ class Table(Component):
 		self.data = []
 		self.footer = None
 		self.border = (2, 2, 2, 2)
+		self.code_page = None
 
 		# table options
 		self.print_titles = True
@@ -57,6 +58,12 @@ class Table(Component):
 		"""Configure printing cell lines."""
 		self.print_cell_lines = print_cell_lines
 
+	def set_code_page(self, code_page):
+		"""Set code page for cell values and column titles. Borders and
+		cell lines stay in printer's default page so box characters
+		print correctly with any page."""
+		self.code_page = code_page
+
 	def set_footer(self, footer):
 		"""Sets footer component which can be used to print summaries
 		and similar information."""
@@ -92,6 +99,13 @@ class Table(Component):
 			if y is None: return x
 			return x - y
 
+		# code page switches around cell content, empty if not requested
+		if self.code_page is not None:
+			page_on = self.printer.set_code_page(self.code_page)
+			page_off = self.printer.set_code_page(self.printer.default_code_page)
+		else:
+			page_on = page_off = ''
+
 		def prepare_cell(width, value, border):
 			value = textwrap.wrap(
 					str(value), width=width, expand_tabs=True, replace_whitespace=True,
@@ -99,8 +113,8 @@ class Table(Component):
 					break_on_hyphens=True, tabsize=0, max_lines=None, placeholder='…'
 					)
 
-			output = '{:<' + str(cw) + '}' + border
-			return tuple(map(lambda v: output.format(v), value))
+			output = '{:<' + str(width) + '}'
+			return tuple(page_on + output.format(v) + page_off + border for v in value)
 
 		# prepare column widths
 		initial_width = width - (len(self.columns) - 1)
@@ -149,7 +163,7 @@ class Table(Component):
 			pos += cw
 
 			# update columns row
-			columns += f'{self.printer.ESC}E1' + column.get_title(cw) + f'{self.printer.ESC}E0'
+			columns += f'{self.printer.ESC}E1' + page_on + column.get_title(cw) + page_off + f'{self.printer.ESC}E0'
 
 			# update characters
 			if index == len(widths) - 1:
@@ -201,7 +215,7 @@ class Table(Component):
 				else:
 					end_char = Border.v_chars[right_border]
 
-				empty_line = ' ' * (len(value_lines[0]) - 1) + end_char
+				empty_line = ' ' * widths[index] + end_char
 				processed_row[index] = value_lines + ((empty_line,) * missing_lines)
 
 			final_rows = zip(*processed_row)
