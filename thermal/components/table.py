@@ -112,6 +112,13 @@ class Table(Component):
 		default_count = len(tuple(filter(lambda x: x is None, widths)))
 		default_width = math.floor(remaining / default_count) if default_count > 0 else 0
 
+		# resolve flexible columns, last one takes the remainder so rows
+		# are exactly as wide as border lines
+		flexible = [index for index, column_width in enumerate(widths) if column_width is None]
+		widths = [column_width or default_width for column_width in widths]
+		if flexible:
+			widths[flexible[-1]] += remaining - default_width * default_count
+
 		# prepare horizontal lines
 		top_border, right_border, bottom_border, left_border = self.border
 		top = list(Border.h_chars[top_border] * width)
@@ -138,7 +145,7 @@ class Table(Component):
 			columns += Border.v_chars[left_border]
 
 		for index, column in enumerate(self.columns):
-			cw = widths[index] or default_width
+			cw = widths[index]
 			pos += cw
 
 			# update columns row
@@ -175,7 +182,7 @@ class Table(Component):
 
 			# wrap all the column values to column widths
 			for index, column in enumerate(widths):
-				cw = widths[index] or default_width
+				cw = widths[index]
 				if index < len(self.columns) - 1:
 					end_char = Border.v_chars[self.print_cell_lines]
 				elif self.print_border:
