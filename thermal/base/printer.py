@@ -110,11 +110,24 @@ class Printer:
 		return f'{self.ESC}3' + chr(spacing)
 
 	def set_tab_stops(self, tab_stops=None):
-		"""Set positions of tab stops."""
+		"""Return string for setting horizontal tab positions, in characters
+		from the left margin. Positions must be ascending, between 1 and 255,
+		at most 32 of them. Without positions all tab stops are cancelled."""
+		tab_stops = tuple(tab_stops or ())
+		if len(tab_stops) > 32:
+			raise ValueError('Printer supports at most 32 tab stops.')
+
 		positions = ''
+		previous = 0
 		for position in tab_stops:
-			if 0 > position > 255: continue
+			if not previous < position <= 255:
+				raise ValueError(
+						f'Tab stop {position} must be greater than previous '
+						f'stop {previous} and at most 255.'
+						)
 			positions += chr(position)
+			previous = position
+
 		return f'{self.ESC}D{positions}\x00'
 
 	def set_alignment(self, alignment=0):
