@@ -8,9 +8,8 @@ class EpsonPrinter(Printer):
 	# printer specification
 	print_area = 512
 	supports_cutting = True
+	cut_feed_units = 0
 	default_code_page = 0
-	offset_lines = 3  # number of lines to feed before print is fully visible
-	offset_units = 200
 	legacy_graphics = False
 
 	def __init__(self, connection):

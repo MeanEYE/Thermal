@@ -13,9 +13,8 @@ class Printer:
 	# printer specification
 	print_area = 384
 	supports_cutting = False
+	cut_feed_units = 0  # extra motion units to feed past cutting position before cut
 	default_code_page = 0
-	offset_lines = 3  # number of lines to feed before print is fully visible
-	offset_units = 350
 	legacy_graphics = True
 
 	# width of text in dots
@@ -201,7 +200,14 @@ class Printer:
 		"""Send buffer to active connection for printing."""
 		self.connection.write(buffer)
 
-	def cut_paper(self, partial=True):
-		"""If supported paper will be cut partially or in entirety."""
-		option = '1' if partial else '0'
-		self.connection.write(f'{self.GS}V{option}')
+	def cut_paper(self, partial=True, feed=None):
+		"""Cut paper partially or in entirety. With `feed` printer first feeds
+		paper to the cutting position plus that many motion units (GS V 65/66),
+		without it paper is cut at the current position (GS V 0/1)."""
+		if feed is None:
+			command = f'{self.GS}V' + ('1' if partial else '0')
+		else:
+			feed = max(0, min(int(feed), 255))
+			command = f'{self.GS}V' + ('B' if partial else 'A') + chr(feed)
+
+		self.connection.write(command.encode('latin1'))

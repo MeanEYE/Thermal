@@ -59,7 +59,6 @@ class Report:
 		self.printer.print(b'\x0A'.join(buffer))
 		self.printer.line_feed()
 
-		# cut paper if requested
+		# feed to cutting position and cut paper if requested
 		if cut_after and self.printer.supports_cutting:
-			self.printer.line_feed_in_units(self.printer.offset_units)
-			self.printer.cut_paper(cut_partial)
+			self.printer.cut_paper(cut_partial, feed=self.printer.cut_feed_units)
