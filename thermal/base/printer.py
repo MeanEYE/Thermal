@@ -65,6 +65,8 @@ class Printer:
 				'/u': f'{cls.ESC}-0',
 				'inv': f'{cls.GS}B1',
 				'/inv': f'{cls.GS}B0',
+				'smooth': f'{cls.GS}b1',
+				'/smooth': f'{cls.GS}b0',
 				'r0': f'{cls.ESC}V0',
 				'r90': f'{cls.ESC}V1',
 				'r180': f'{cls.ESC}V2',
@@ -135,6 +137,12 @@ class Printer:
 			previous = position
 
 		return f'{self.ESC}D{positions}\x00'
+
+	def set_smoothing(self, enabled=True):
+		"""Return string for turning smoothing on or off. Printer smooths
+		edges of characters enlarged with character size command, normal
+		size text and graphics are not affected."""
+		return f'{self.GS}b' + chr(1 if enabled else 0)
 
 	def set_upside_down(self, enabled=True):
 		"""Return string for turning upside-down print mode on or off. Printer

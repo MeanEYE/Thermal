@@ -54,6 +54,9 @@ report.add(Text(
 	'automatically so paragraphs just work.'
 	))
 report.add(Text('[size 1,0]Double width[/size] and [size 0,1]double height[/size]'))
+
+# smoothing removes jagged edges from enlarged characters, compare the two
+report.add(Text('[size 2,2]Rough[/size] [smooth][size 2,2]Smooth[/size][/smooth]'))
 report.add(Text('[align r]Right aligned line'))
 report.add(Text('[align c]Centered line'))
 
