@@ -14,7 +14,7 @@ import random
 from thermal.printers import EpsonPrinter
 from thermal.base import Report
 from thermal.connections import BluetoothConnection, UsbConnection, DebugConnection
-from thermal.components import Text, Ruler, Border, Table, Column, BarCode, MatrixCode, Image
+from thermal.components import Text, Ruler, Border, Table, Column, BarCode, MatrixCode, Image, Flip
 
 
 # connection = BluetoothConnection('66:12:B5:6A:99:21', 1)
@@ -127,6 +127,14 @@ report.add(qr)
 report.add(Text(f'Reference to logo by id [img {logo.image_id} 1,1] and text continues after it.'))
 report.add(Ruler(double=True))
 report.add(Text('[align c][em]Thank you![/em]'))
+
+# everything after Flip is printed upside down until the next Flip,
+# useful for a part of receipt facing the other way; printer rotates
+# lines but keeps their order so they are added here bottom-up
+report.add(Flip())
+report.add(Text('[align c]Merchant copy'))
+report.add(Ruler())
+report.add(Text('[align c][em]Thermal Demo[/em]'))
 
 
 # --- data and printing --------------------------------------------------

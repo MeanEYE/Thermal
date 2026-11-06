@@ -4,6 +4,12 @@ class Component:
 	"""Base component class which is inherited and then added to
 	the report to be printed upon request."""
 
+	# components which only emit printer commands and no printable
+	# content set this to False; report then puts their output at the
+	# beginning of the next component's first line instead of feeding
+	# a line after them
+	feeds_line = True
+
 	def __init__(self):
 		self.printer = None
 

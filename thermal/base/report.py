@@ -35,6 +35,7 @@ class Report:
 
 		# go through each component and get lines for printing
 		buffer = []
+		carry = b''
 		width = self.printer.get_width()
 		for component in self.components:
 			lines = component.get_lines(width)
@@ -42,8 +43,18 @@ class Report:
 				continue
 
 			lines = [line if isinstance(line, bytes) else line.encode('latin1') for line in lines]
-			lines[0] = reset_modes + lines[0]
+
+			# command only components are carried to the start of next line
+			if not component.feeds_line:
+				carry += b''.join(lines)
+				continue
+
+			lines[0] = reset_modes + carry + lines[0]
+			carry = b''
 			buffer.extend(lines)
+
+		if carry:
+			buffer.append(carry)
 
 		self.printer.print(b'\x0A'.join(buffer))
 		self.printer.line_feed()

@@ -24,6 +24,7 @@ class Printer:
 
 	def __init__(self, connection):
 		self.connection = connection
+		self.upside_down = False
 
 	@classmethod
 	def __parse_font(self, match, string):
@@ -104,6 +105,7 @@ class Printer:
 	def reset(self):
 		"""Reset printer to default configuration."""
 		self.connection.write(self.INIT_PRINTER)
+		self.upside_down = False
 
 	def set_default_line_spacing(self):
 		"""Set default line spacing in dots."""
@@ -133,6 +135,13 @@ class Printer:
 			previous = position
 
 		return f'{self.ESC}D{positions}\x00'
+
+	def set_upside_down(self, enabled=True):
+		"""Return string for turning upside-down print mode on or off. Printer
+		rotates each following line by 180 degrees, order of lines is not
+		changed. Only honoured at the beginning of a line."""
+		self.upside_down = enabled
+		return f'{self.ESC}{{' + chr(1 if enabled else 0)
 
 	def set_alignment(self, alignment=0):
 		"""Return string for setting alignment, 0 - left, 1 - center, 2 - right.
