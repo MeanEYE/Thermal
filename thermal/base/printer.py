@@ -67,9 +67,9 @@ class Printer:
 				'/inv': f'{cls.GS}B0',
 				'smooth': f'{cls.GS}b1',
 				'/smooth': f'{cls.GS}b0',
-				'r0': f'{cls.ESC}V0',
+				'r0': f'{cls.ESC}V0{cls.ESC}{{\x00',  # clears both 90 degree and upside-down
 				'r90': f'{cls.ESC}V1',
-				'r180': f'{cls.ESC}V2',
+				'r180': f'{cls.ESC}{{\x01',  # upside-down, only at the beginning of a line
 				'r270': f'{cls.ESC}V3',
 				'align l': f'{cls.ESC}a\x00',
 				'align c': f'{cls.ESC}a\x01',
