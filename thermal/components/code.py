@@ -36,8 +36,8 @@ class BarCode(Code):
 			self.height = height
 
 	def set_width(self, width):
-		"""Set code width scale."""
-		if 0 <= width <= 4:
+		"""Set module width in dots, 2 to 6."""
+		if 2 <= width <= 6:
 			self.width = width
 
 	def set_text_position(self, position):
@@ -92,7 +92,7 @@ class MatrixCode(Code):
 		self.module_size = 6
 
 	def set_error_correction(self, level):
-		"""Set error correction level."""
+		"""Set error correction level: 1 - L, 2 - M, 3 - Q, 4 - H."""
 		if 1 <= level <= 4:
 			self.error_correction = level
 
@@ -116,7 +116,7 @@ class MatrixCode(Code):
 		lines.append(f'{printer.GS}(k{data_size}\x31\x50\x30' + self.data)
 
 		# set qr code properties
-		lines.append(f'{printer.GS}(k\x03\x00\x31\x45' + chr(ord('\x29') + self.error_correction))
+		lines.append(f'{printer.GS}(k\x03\x00\x31\x45' + chr(0x2F + self.error_correction))
 		lines.append(f'{printer.GS}(k\x03\x00\x31\x43' + chr(self.module_size))
 
 		# actually print code
