@@ -11,9 +11,17 @@ class Text(Component):
 
 	Tabs (`[tab]` markup) are sent to the printer which advances to
 	the next tab stop. Stops default to every 8 characters and can be
-	changed with `set_tab_stops`. Wrapping takes stops into account."""
+	changed with `set_tab_stops`. Wrapping takes stops into account.
+
+	Image references (`[img id]` markup) are printed by the printer only
+	at the beginning of a line, so they break the line: text before the
+	reference ends its line, image is printed, text after continues on
+	the following line."""
 
 	DEFAULT_TAB_STOPS = tuple(range(8, 256, 8))
+
+	# download graphics print command produced by `[img id]` markup
+	IMAGE_COMMAND = re.compile(r'(\x1d\(L\x06\x000U..[\x01\x02][\x01\x02])')
 
 	def __init__(self, text):
 		self.value = text
@@ -95,7 +103,25 @@ class Text(Component):
 		"""Return list of lines to be printed."""
 		printer = self.printer
 		tab_stops = self.tab_stops or self.DEFAULT_TAB_STOPS
-		text = self.__wrap(printer.parse(self.value), width, tab_stops)
+
+		# wrap text between image references separately, each image
+		# command must start a line and following text goes after it
+		text = []
+		image_command = ''
+		for index, part in enumerate(self.IMAGE_COMMAND.split(printer.parse(self.value))):
+			if index % 2 == 1:
+				image_command = part
+				continue
+
+			lines = self.__wrap(part, width, tab_stops)
+			if image_command:
+				if lines:
+					lines[0] = image_command + lines[0]
+				else:
+					lines = [image_command,]
+				image_command = ''
+			text.extend(lines)
+
 		if not text:
 			return text
 

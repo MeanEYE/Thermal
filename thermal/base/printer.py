@@ -42,10 +42,14 @@ class Printer:
 
 	@classmethod
 	def __parse_image(self, match, string):
-		"""Return string for including image type."""
+		"""Return string for printing download graphics by id, with
+		optional scale. Printer only honours this at the beginning of a
+		line, `Text` takes care of placing it there."""
 		values = match.groupdict()
 		image_id = values['id']
-		return f'{self.GS}(L\x06\x000U{image_id}\x01\x01'
+		x_scale = chr(int(values['x'] or 1))
+		y_scale = chr(int(values['y'] or 1))
+		return f'{self.GS}(L\x06\x000U{image_id}{x_scale}{y_scale}'
 
 	@classmethod
 	def parse(cls, string):
@@ -73,7 +77,7 @@ class Printer:
 		parsers = (
 			 (r'\[font (?P<number>\d{1})\]', cls.__parse_font),
 			 (r'\[size (?P<width>\d{1,2})(?:,(?P<height>\d{1,2}))?\]', cls.__parse_size),
-			 (r'\[img (?P<id>[a-zA-z0-9]+)?\]', cls.__parse_image)
+			 (r'\[img (?P<id>[^\]\s]{2})(?: (?P<x>[12]),(?P<y>[12]))?\]', cls.__parse_image)
 			 )
 
 		# replace instances

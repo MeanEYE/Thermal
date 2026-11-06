@@ -152,9 +152,9 @@ logo.set_alignment(1)
 
 report.add(Text(
 	f'This is a test for image printing. This is inline image [img {logo.image_id}] '
-	'but most printers break lines [em]around[/em] them! Do note this only references '
-	'the image and does not perform data upload! So you might end up with racing '
-	'conditions!'
+	'referenced by id. Printers only print graphics at the [em]beginning of a line[/em] '
+	'so text is broken around the image. Reference does not upload data, image '
+	'component must come earlier in the report.'
 	))
 report.add(Ruler(double=False))
 
