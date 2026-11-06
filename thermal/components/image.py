@@ -19,8 +19,8 @@ class Image(Component):
 		if image_id:
 			self.image_id = image_id[:2]
 		else:
-			self.image_id = hex(self.image_counter)[2:4].zfill(2)
-			self.image_counter += 1
+			self.image_id = f'{Image.image_counter % 256:02x}'
+			Image.image_counter += 1
 
 	def __get_int_in_bytes(self, value):
 		"""Return low and high bytes for single integer."""
